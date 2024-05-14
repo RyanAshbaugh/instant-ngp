@@ -172,6 +172,11 @@ sudo apt-get install build-essential git python3-dev python3-pip libopenexr-dev 
                      libglfw3-dev libglew-dev libomp-dev libxinerama-dev libxcursor-dev
 ```
 
+If using Debian based Linux distribution on Windows with WSL2, you must also first install the x11 applications
+```
+sudo apt install x11-apps -y
+```
+
 Alternatively, if you are using Arch or Arch derivatives, install the following packages
 ```sh
 sudo pacman -S cuda base-devel cmake openexr libxi glfw openmp libxinerama libxcursor
