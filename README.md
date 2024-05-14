@@ -196,8 +196,20 @@ $ cd instant-ngp
 
 Then, use CMake to build the project: (on Windows, this must be in a [developer command prompt](https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-160#developer_command_prompt))
 ```sh
-instant-ngp$ cmake . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+instant-ngp$ cmake . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo 
 instant-ngp$ cmake --build build --config RelWithDebInfo -j
+```
+
+If there is an issue with finding the CUDA_ROOT directory:
+
+```
+CMake Error at /usr/share/cmake-3.22/Modules/CMakeDetermineCUDACompiler.cmake:226 (message):                                                              
+  Couldn't find CUDA library root. 
+```
+then setting the CMAKE_CUDA_COMPILER flag to your nvcc installation should resolve this:
+
+```
+instant-ngp$ cmake . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.4/bin/nvcc
 ```
 
 If compilation fails inexplicably or takes longer than an hour, you might be running out of memory. Try running the above command without `-j` in that case.
