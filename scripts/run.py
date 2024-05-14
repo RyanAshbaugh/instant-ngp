@@ -78,8 +78,7 @@ def get_scene(scene):
 			return scenes[scene]
 	return None
 
-if __name__ == "__main__":
-	args = parse_args()
+def run(args):
 	if args.vr: # VR implies having the GUI running at the moment
 		args.gui = True
 
@@ -336,3 +335,8 @@ if __name__ == "__main__":
 			os.system(f"ffmpeg -y -framerate {args.video_fps} -i tmp/%04d.jpg -c:v libx264 -pix_fmt yuv420p {args.video_output}")
 
 		shutil.rmtree("tmp")
+
+
+if __name__ == "__main__":
+	args = parse_args()
+	run(args)
