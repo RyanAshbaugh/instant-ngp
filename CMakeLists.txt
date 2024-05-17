@@ -19,11 +19,11 @@ if (NOT NGP_DEPLOY)
 	set(NGP_VERSION "${NGP_VERSION}dev")
 endif()
 
-option(NGP_BUILD_EXECUTABLE "Build instant-ngp.exe?" ON)
+option(NGP_BUILD_EXECUTABLE "Build instant-ngp.exe?" off)
 option(NGP_BUILD_WITH_GUI "Build with GUI support (requires GLFW and GLEW)?" ON)
-option(NGP_BUILD_WITH_OPTIX "Build with OptiX to enable hardware ray tracing?" ON)
+option(NGP_BUILD_WITH_OPTIX "Build with OptiX to enable hardware ray tracing?" off)
 option(NGP_BUILD_WITH_PYTHON_BINDINGS "Build bindings that allow instrumenting instant-ngp with Python?" ON)
-option(NGP_BUILD_WITH_VULKAN "Build with Vulkan to enable DLSS support?" ON)
+option(NGP_BUILD_WITH_VULKAN "Build with Vulkan to enable DLSS support?" off)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
