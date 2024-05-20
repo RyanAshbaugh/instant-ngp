@@ -245,6 +245,21 @@ Happy hacking!
 - [Getting started with NVIDIA Instant NeRF blog post](https://developer.nvidia.com/blog/getting-started-with-nvidia-instant-nerfs/)
 - [SIGGRAPH tutorial for advanced NeRF dataset creation](https://www.nvidia.com/en-us/on-demand/session/siggraph2022-sigg22-s-16/).
 
+## Troubleshooting
+
+If the following error is encountered while using a conda environment:
+
+```
+ImportError: /home/username/anaconda3/envs/ingp/bin/../lib/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /home/username
+/repos/instant-ngp/build/pyngp.cpython-310-x86_64-linux-gnu.so)
+```
+
+it can be resolved by running
+
+```
+conda install -c conda-forge libstdcxx-ng
+```
+
 
 ## Frequently asked questions (FAQ)
 
