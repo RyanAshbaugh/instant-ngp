@@ -18,8 +18,8 @@ from scipy.ndimage.filters import convolve1d
 import struct
 import sys
 
-import flip
-import flip.utils
+from . import flip
+from .flip import utils
 
 PAPER_FOLDER = Path(__file__).resolve().parent.parent
 SUPPL_FOLDER = PAPER_FOLDER/"supplemental"
