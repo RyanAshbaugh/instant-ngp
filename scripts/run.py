@@ -17,8 +17,8 @@ import numpy as np
 import shutil
 import time
 
-from .common import *
-from .scenes import *
+from instant_ngp.scripts.common import *
+from instant_ngp.scripts.scenes import *
 
 from tqdm import tqdm
 
