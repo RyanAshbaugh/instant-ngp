@@ -24,7 +24,7 @@ from tqdm import tqdm
 
 import pyngp as ngp # noqa
 
-def parse_args():
+def get_parser():
 	parser = argparse.ArgumentParser(description="Run instant neural graphics primitives with additional configuration & output options")
 
 	parser.add_argument("files", nargs="*", help="Files to be loaded. Can be a scene, network config, snapshot, camera path, or a combination of those.")
@@ -70,7 +70,7 @@ def parse_args():
 	parser.add_argument("--sharpen", default=0, help="Set amount of sharpening applied to NeRF training images. Range 0.0 to 1.0.")
 
 
-	return parser.parse_args()
+	return parser
 
 def get_scene(scene):
 	for scenes in [scenes_sdf, scenes_nerf, scenes_image, scenes_volume]:
@@ -338,5 +338,5 @@ def run(args):
 
 
 if __name__ == "__main__":
-	args = parse_args()
+	args = get_parser().parse_args()
 	run(args)
