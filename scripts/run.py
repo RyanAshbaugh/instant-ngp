@@ -78,6 +78,68 @@ def get_scene(scene):
 			return scenes[scene]
 	return None
 
+def run_test(testbed, test_transforms_file):
+	print("Evaluating test transforms from ", test_transforms_file)
+	with open(test_transforms_file) as f:
+		test_transforms = json.load(f)
+	data_dir=os.path.dirname(test_transforms_file)
+	totmse = 0
+	totpsnr = 0
+	totssim = 0
+	totcount = 0
+	minpsnr = 1000
+	maxpsnr = 0
+
+	# Evaluate metrics on black background
+	testbed.background_color = [0.0, 0.0, 0.0, 1.0]
+
+	# Prior nerf papers don't typically do multi-sample anti aliasing.
+	# So snap all pixels to the pixel centers.
+	testbed.snap_to_pixel_centers = True
+	spp = 8
+
+	testbed.nerf.render_min_transmittance = 1e-4
+
+	testbed.shall_train = False
+	testbed.load_training_data(test_transforms_file)
+
+	with tqdm(range(testbed.nerf.training.dataset.n_images), unit="images", desc=f"Rendering test frame") as t:
+		for i in t:
+			resolution = testbed.nerf.training.dataset.metadata[i].resolution
+			testbed.render_ground_truth = True
+			testbed.set_camera_to_training_view(i)
+			ref_image = testbed.render(resolution[0], resolution[1], 1, True)
+			testbed.render_ground_truth = False
+			image = testbed.render(resolution[0], resolution[1], spp, True)
+
+			if i == 0:
+				write_image(f"ref.png", ref_image)
+				write_image(f"out.png", image)
+
+				diffimg = np.absolute(image - ref_image)
+				diffimg[...,3:4] = 1.0
+				write_image("diff.png", diffimg)
+
+			A = np.clip(linear_to_srgb(image[...,:3]), 0.0, 1.0)
+			R = np.clip(linear_to_srgb(ref_image[...,:3]), 0.0, 1.0)
+			mse = float(compute_error("MSE", A, R))
+			ssim = float(compute_error("SSIM", A, R))
+			totssim += ssim
+			totmse += mse
+			psnr = mse2psnr(mse)
+			totpsnr += psnr
+			minpsnr = psnr if psnr<minpsnr else minpsnr
+			maxpsnr = psnr if psnr>maxpsnr else maxpsnr
+			totcount = totcount+1
+			t.set_postfix(psnr = totpsnr/(totcount or 1))
+
+	psnr_avgmse = mse2psnr(totmse/(totcount or 1))
+	psnr = totpsnr/(totcount or 1)
+	ssim = totssim/(totcount or 1)
+	print(f"PSNR={psnr} [min={minpsnr} max={maxpsnr}] SSIM={ssim}")
+
+	return psnr, minpsnr, maxpsnr, ssim
+
 def run(args):
 	if args.vr: # VR implies having the GUI running at the moment
 		args.gui = True
@@ -207,64 +269,66 @@ def run(args):
 		testbed.save_snapshot(args.save_snapshot, False)
 
 	if args.test_transforms:
-		print("Evaluating test transforms from ", args.test_transforms)
-		with open(args.test_transforms) as f:
-			test_transforms = json.load(f)
-		data_dir=os.path.dirname(args.test_transforms)
-		totmse = 0
-		totpsnr = 0
-		totssim = 0
-		totcount = 0
-		minpsnr = 1000
-		maxpsnr = 0
+		run_test(testbed, args.test_transforms)
+		
+		# print("Evaluating test transforms from ", args.test_transforms)
+		# with open(args.test_transforms) as f:
+		# 	test_transforms = json.load(f)
+		# data_dir=os.path.dirname(args.test_transforms)
+		# totmse = 0
+		# totpsnr = 0
+		# totssim = 0
+		# totcount = 0
+		# minpsnr = 1000
+		# maxpsnr = 0
 
-		# Evaluate metrics on black background
-		testbed.background_color = [0.0, 0.0, 0.0, 1.0]
+		# # Evaluate metrics on black background
+		# testbed.background_color = [0.0, 0.0, 0.0, 1.0]
 
-		# Prior nerf papers don't typically do multi-sample anti aliasing.
-		# So snap all pixels to the pixel centers.
-		testbed.snap_to_pixel_centers = True
-		spp = 8
+		# # Prior nerf papers don't typically do multi-sample anti aliasing.
+		# # So snap all pixels to the pixel centers.
+		# testbed.snap_to_pixel_centers = True
+		# spp = 8
 
-		testbed.nerf.render_min_transmittance = 1e-4
+		# testbed.nerf.render_min_transmittance = 1e-4
 
-		testbed.shall_train = False
-		testbed.load_training_data(args.test_transforms)
+		# testbed.shall_train = False
+		# testbed.load_training_data(args.test_transforms)
 
-		with tqdm(range(testbed.nerf.training.dataset.n_images), unit="images", desc=f"Rendering test frame") as t:
-			for i in t:
-				resolution = testbed.nerf.training.dataset.metadata[i].resolution
-				testbed.render_ground_truth = True
-				testbed.set_camera_to_training_view(i)
-				ref_image = testbed.render(resolution[0], resolution[1], 1, True)
-				testbed.render_ground_truth = False
-				image = testbed.render(resolution[0], resolution[1], spp, True)
+		# with tqdm(range(testbed.nerf.training.dataset.n_images), unit="images", desc=f"Rendering test frame") as t:
+		# 	for i in t:
+		# 		resolution = testbed.nerf.training.dataset.metadata[i].resolution
+		# 		testbed.render_ground_truth = True
+		# 		testbed.set_camera_to_training_view(i)
+		# 		ref_image = testbed.render(resolution[0], resolution[1], 1, True)
+		# 		testbed.render_ground_truth = False
+		# 		image = testbed.render(resolution[0], resolution[1], spp, True)
 
-				if i == 0:
-					write_image(f"ref.png", ref_image)
-					write_image(f"out.png", image)
+		# 		if i == 0:
+		# 			write_image(f"ref.png", ref_image)
+		# 			write_image(f"out.png", image)
 
-					diffimg = np.absolute(image - ref_image)
-					diffimg[...,3:4] = 1.0
-					write_image("diff.png", diffimg)
+		# 			diffimg = np.absolute(image - ref_image)
+		# 			diffimg[...,3:4] = 1.0
+		# 			write_image("diff.png", diffimg)
 
-				A = np.clip(linear_to_srgb(image[...,:3]), 0.0, 1.0)
-				R = np.clip(linear_to_srgb(ref_image[...,:3]), 0.0, 1.0)
-				mse = float(compute_error("MSE", A, R))
-				ssim = float(compute_error("SSIM", A, R))
-				totssim += ssim
-				totmse += mse
-				psnr = mse2psnr(mse)
-				totpsnr += psnr
-				minpsnr = psnr if psnr<minpsnr else minpsnr
-				maxpsnr = psnr if psnr>maxpsnr else maxpsnr
-				totcount = totcount+1
-				t.set_postfix(psnr = totpsnr/(totcount or 1))
+		# 		A = np.clip(linear_to_srgb(image[...,:3]), 0.0, 1.0)
+		# 		R = np.clip(linear_to_srgb(ref_image[...,:3]), 0.0, 1.0)
+		# 		mse = float(compute_error("MSE", A, R))
+		# 		ssim = float(compute_error("SSIM", A, R))
+		# 		totssim += ssim
+		# 		totmse += mse
+		# 		psnr = mse2psnr(mse)
+		# 		totpsnr += psnr
+		# 		minpsnr = psnr if psnr<minpsnr else minpsnr
+		# 		maxpsnr = psnr if psnr>maxpsnr else maxpsnr
+		# 		totcount = totcount+1
+		# 		t.set_postfix(psnr = totpsnr/(totcount or 1))
 
-		psnr_avgmse = mse2psnr(totmse/(totcount or 1))
-		psnr = totpsnr/(totcount or 1)
-		ssim = totssim/(totcount or 1)
-		print(f"PSNR={psnr} [min={minpsnr} max={maxpsnr}] SSIM={ssim}")
+		# psnr_avgmse = mse2psnr(totmse/(totcount or 1))
+		# psnr = totpsnr/(totcount or 1)
+		# ssim = totssim/(totcount or 1)
+		# print(f"PSNR={psnr} [min={minpsnr} max={maxpsnr}] SSIM={ssim}")
 
 	if args.save_mesh:
 		res = args.marching_cubes_res or 256
@@ -335,6 +399,8 @@ def run(args):
 			os.system(f"ffmpeg -y -framerate {args.video_fps} -i tmp/%04d.jpg -c:v libx264 -pix_fmt yuv420p {args.video_output}")
 
 		shutil.rmtree("tmp")
+
+	return testbed
 
 
 if __name__ == "__main__":
